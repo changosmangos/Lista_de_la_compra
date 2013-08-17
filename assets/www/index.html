@@ -1,0 +1,165 @@
+<html>
+  <head>
+  	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Lista de la compra</title>
+
+    <script type="text/javascript" charset="utf-8" src="js/cordova-2.1.0.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/jquery-1.7.2.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/jquery.mobile-1.2.0.min.js"></script>
+    <link rel="stylesheet" href="css/jquery.mobile.theme-1.2.0.min.css" />
+    <link rel="stylesheet" href="css/jquery.mobile.structure-1.2.0.min.css" />
+    <link rel="stylesheet" href="css/jquery.mobile-1.2.0.min.css" />
+    <link rel="stylesheet" href="css/themes/estilos.min.css" />
+    <script type="text/javascript" charset="utf-8">
+
+	document.addEventListener("deviceready", onDeviceReady, false);
+    
+    var db;
+    
+    function populateDB(tx) {
+    	tx.executeSql('CREATE TABLE IF NOT EXISTS listacompra (id INTEGER PRIMARY KEY AUTOINCREMENT, item varchar, quantity varchar)');
+    }
+    
+    function onErrorDB(err){
+    	alert("Error processing SQL: "+err.code);
+    }
+    
+    function onSuccessDB() {
+    	var db=window.openDatabase("listacompra", "1.0", "listacompraDB", 1000000);
+    	db.transaction(queryDB, onErrorDB);
+    }
+    
+    function onDeviceReady(){
+    	var db=window.openDatabase("listacompra", "1.0", "listacompraDB", 1000000);
+    	db.transaction(populateDB, onErrorDB, onSuccessDB);
+	}
+	
+	function synch() {
+		var db=window.openDatabase("listacompra", "1.0", "listacompraDB", 1000000);
+		db.transaction(populateDB, onErrorDB, onSuccessDB);
+		db.transaction(insertRow,onErrorDB, onSuccessDB);
+	}
+	
+	function insertRow(tx) {
+		var item=$("#item").val();
+		var quantity=$("#quantity").val();
+		tx.executeSql('INSERT INTO listacompra (item, quantity) VALUES ( ?, ?)', [item, quantity]);
+		document.getElementById("item").value="";
+		document.getElementById("quantity").value="";
+	}
+	
+	function queryDB(tx){
+		tx.executeSql('SELECT * FROM listacompra',[],renderList, onErrorDB);
+	}
+	
+	function renderList(tx, results) {
+		$('#itemlistview').empty();
+        var len = results.rows.length;
+        //console.log("Tabla listacompra: " + len + " filas encontradas.");
+        for (var i=0; i<len; i++){
+        $('#itemlistview').append('<li><br><h3 class="ui-li-heading"> '+'   '+results.rows.item(i).item+' x '+results.rows.item(i).quantity+'</h3><br></li><hr>');	
+        }
+        $('#itemlistview').listview();
+    }
+    
+    function onDeviceReady() {
+        var db=window.openDatabase("listacompra", "1.0", "listacompraDB", 1000000);
+        db.transaction(populateDB, onErrorDB, onSuccessDB);
+    }
+    
+    function deleteDB(tx) {
+     	tx.executeSql('DROP TABLE IF EXISTS listacompra');
+     	$('#itemlistview').empty();
+	}
+	
+	function borrarLista(){
+    	var db=window.openDatabase("listacompra", "1.0", "listacompraDB", 1000000);
+    	//db.transaction(deleteDB, onErrorDB, onSuccessDB);
+    	db.transaction(deleteDB);
+    	alert("La lista ha sido eliminada.")
+	}
+	
+	function feedback() {
+		window.open("mailto:marioperezesteso@geekytheory.com?subject=Lista de la compra APP Feedback");
+	}
+	
+	function sharelist() {
+		alert("This button has no function implemented right now. Sorry for the inconveniences.");
+	}
+	
+	function about(){
+		alert("Lista de la compra APP\nDesarrolador: Mario Pérez Esteso (Twitter: @_Mario_Perez)\nVersión: v 1.0\nPulsa el botón de feedback para mandarme un correo electrónico.");
+	}
+    
+	</script>
+	</head>
+	<body>
+	<!-- Start of first page -->
+<div data-role="page" id="itemlist">
+
+	<div data-role="header" data-position="fixed">
+		<h1>LISTA</h1>
+		<a href="#options" data-icon="gear" class="ui-btn-right" data-transition="none">Opciones</a>
+		<div data-role="navbar" data-iconpos="top">
+		<ul>
+			<li><a href="#itemlist" data-icon="grid" data-transition="none">LISTA</a></li>
+			<li><a href="#additem" data-icon="plus" data-transition="none">AÑADIR</a></li>
+		</ul>
+	</div><!-- /navbar -->
+	</div><!-- /header -->
+
+	<div data-role="content" id="mainContent">	
+		<ul data-role="listview" id="itemlistview"></ul>
+	</div>
+
+</div><!-- /page -->
+
+<!-- Start of second page -->
+<div data-role="page" id="additem">
+
+	<div data-role="header" data-position="fixed">
+		<h1>AÑADIR</h1>
+		<a href="#options" data-icon="gear" class="ui-btn-right" data-transition="none">Opciones</a>
+		<div data-role="navbar" data-iconpos="top">
+		<ul>
+			<li><a href="#itemlist" data-icon="grid" data-transition="none">LISTA</a></li>
+			<li><a href="#additem" data-icon="plus" data-transition="none">AÑADIR</a></li>
+		</ul>
+	</div><!-- /navbar -->
+	</div><!-- /header -->
+
+	<div data-role="content">	
+		<p>Artículo:</p>		
+		<p><center><textarea id='item'></textarea></center></p>	
+		<p>Cantidad:</p>
+		<p><center><textarea id='quantity'></textarea></center></p>
+		<center><button onClick="synch();" data-icon="plus">AÑADIR ARTÍCULO</button></center>
+	</div><!-- /content -->
+
+</div><!-- /page -->
+	
+	<!-- Start of third page -->
+<div data-role="page" id="options">
+
+	<div data-role="header" data-position="fixed">
+		<h1>OPCIONES</h1>
+				<a href="#itemlist" data-icon="home" class="ui-btn-right" data-transition="none">HOME</a>
+	</div><!-- /header -->
+
+	<div data-role="content">
+	<center>	
+		<br><br><button onClick="borrarLista();" data-icon="delete">BORRAR LISTA</button> 
+		<br>
+		<!--  <button onClick="sharelist();">SHARE LIST</button>-->
+		<button onClick="feedback();" data-icon="arrow-r">FEEDBACK</button>
+		<br>
+		<button onClick="about();" data-icon="info">ACERCA DE</button>
+		<br>
+		<button onClick="device.exitApp();" data-icon="forward">SALIR</button>
+	</center>
+	</div><!-- /content -->
+</div><!-- /page -->
+	
+	</body>
+	</html>
